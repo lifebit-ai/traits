@@ -1,5 +1,5 @@
 <!--
-# nf-core/traits bug report
+# lifebit-ai/traits bug report
 
 Hi there!
 

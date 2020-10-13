@@ -1,6 +1,6 @@
-# nf-core/traits: Documentation
+# lifebit-ai/traits: Documentation
 
-The nf-core/traits documentation is split into the following pages:
+The lifebit-ai/traits documentation is split into the following pages:
 
 <!-- TODO nf-core: If you write more documentation pages, add them to the docs index page here -->
 

@@ -1,5 +1,5 @@
 <!--
-# nf-core/traits feature request
+# lifebit-ai/traits feature request
 
 Hi there!
 

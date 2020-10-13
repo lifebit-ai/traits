@@ -1,6 +1,6 @@
 FROM nfcore/base:1.10.2
 LABEL authors="Marcos Cámara Donoso, Christina Chatzipantsiou, Athanasios Kousathanas" \
-      description="Docker image containing all software requirements for the nf-core/traits pipeline"
+      description="Docker image containing all software requirements for the lifebit-ai/traits pipeline"
 
 # Install the conda environment
 COPY environment.yml /

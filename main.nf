@@ -1,11 +1,11 @@
 #!/usr/bin/env nextflow
 /*
 ========================================================================================
-                         nf-core/traits
+                         lifebit-ai/traits
 ========================================================================================
- nf-core/traits Analysis Pipeline.
+ lifebit-ai/traits Analysis Pipeline.
  #### Homepage / Documentation
- https://github.com/nf-core/traits
+ https://github.com/lifebit-ai/traits
 ----------------------------------------------------------------------------------------
 */
 
@@ -18,7 +18,7 @@ def helpMessage() {
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run nf-core/traits --input '*_R{1,2}.fastq.gz' -profile docker
+    nextflow run lifebit-ai/traits --input '*_R{1,2}.fastq.gz' -profile docker
 
     Mandatory arguments:
       --input [file]                  Path to input data (must be surrounded with quotes)
@@ -164,8 +164,8 @@ Channel.from(summary.collect{ [it.key, it.value] })
     .map { x -> """
     id: 'nf-core-traits-summary'
     description: " - this information is collected when the pipeline is started."
-    section_name: 'nf-core/traits Workflow Summary'
-    section_href: 'https://github.com/nf-core/traits'
+    section_name: 'lifebit-ai/traits Workflow Summary'
+    section_href: 'https://github.com/lifebit-ai/traits'
     plot_type: 'html'
     data: |
         <dl class=\"dl-horizontal\">
@@ -276,9 +276,9 @@ process output_documentation {
 workflow.onComplete {
 
     // Set up the e-mail variables
-    def subject = "[nf-core/traits] Successful: $workflow.runName"
+    def subject = "[lifebit-ai/traits] Successful: $workflow.runName"
     if (!workflow.success) {
-        subject = "[nf-core/traits] FAILED: $workflow.runName"
+        subject = "[lifebit-ai/traits] FAILED: $workflow.runName"
     }
     def email_fields = [:]
     email_fields['version'] = workflow.manifest.version
@@ -310,12 +310,12 @@ workflow.onComplete {
         if (workflow.success) {
             mqc_report = ch_multiqc_report.getVal()
             if (mqc_report.getClass() == ArrayList) {
-                log.warn "[nf-core/traits] Found multiple reports from process 'multiqc', will use only one"
+                log.warn "[lifebit-ai/traits] Found multiple reports from process 'multiqc', will use only one"
                 mqc_report = mqc_report[0]
             }
         }
     } catch (all) {
-        log.warn "[nf-core/traits] Could not attach MultiQC report to summary email"
+        log.warn "[lifebit-ai/traits] Could not attach MultiQC report to summary email"
     }
 
     // Check if we are only sending emails on failure
@@ -347,7 +347,7 @@ workflow.onComplete {
             if (params.plaintext_email) { throw GroovyException('Send plaintext e-mail, not HTML') }
             // Try to send HTML e-mail using sendmail
             [ 'sendmail', '-t' ].execute() << sendmail_html
-            log.info "[nf-core/traits] Sent summary e-mail to $email_address (sendmail)"
+            log.info "[lifebit-ai/traits] Sent summary e-mail to $email_address (sendmail)"
         } catch (all) {
             // Catch failures and try with plaintext
             def mail_cmd = [ 'mail', '-s', subject, '--content-type=text/html', email_address ]
@@ -355,7 +355,7 @@ workflow.onComplete {
               mail_cmd += [ '-A', mqc_report ]
             }
             mail_cmd.execute() << email_html
-            log.info "[nf-core/traits] Sent summary e-mail to $email_address (mail)"
+            log.info "[lifebit-ai/traits] Sent summary e-mail to $email_address (mail)"
         }
     }
 
@@ -381,10 +381,10 @@ workflow.onComplete {
     }
 
     if (workflow.success) {
-        log.info "-${c_purple}[nf-core/traits]${c_green} Pipeline completed successfully${c_reset}-"
+        log.info "-${c_purple}[lifebit-ai/traits]${c_green} Pipeline completed successfully${c_reset}-"
     } else {
         checkHostname()
-        log.info "-${c_purple}[nf-core/traits]${c_red} Pipeline completed with errors${c_reset}-"
+        log.info "-${c_purple}[lifebit-ai/traits]${c_red} Pipeline completed with errors${c_reset}-"
     }
 
 }
@@ -408,7 +408,7 @@ def nfcoreHeader() {
     ${c_blue}  |\\ | |__  __ /  ` /  \\ |__) |__         ${c_yellow}}  {${c_reset}
     ${c_blue}  | \\| |       \\__, \\__/ |  \\ |___     ${c_green}\\`-._,-`-,${c_reset}
                                             ${c_green}`._,._,\'${c_reset}
-    ${c_purple}  nf-core/traits v${workflow.manifest.version}${c_reset}
+    ${c_purple}  lifebit-ai/traits v${workflow.manifest.version}${c_reset}
     -${c_dim}--------------------------------------------------${c_reset}-
     """.stripIndent()
 }
