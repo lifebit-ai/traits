@@ -1,14 +1,9 @@
-# ![lifebit-ai/traits](docs/images/nf-core-traits_logo.png)
+# `lifebit-ai/traits`
 
 **Workflow for collecting genetic traits information (heritability, genetic correlation) from GWAS summary statistics**.
 
-[![GitHub Actions CI Status](https://github.com/lifebit-ai/traits/workflows/nf-core%20CI/badge.svg)](https://github.com/lifebit-ai/traits/actions)
-[![GitHub Actions Linting Status](https://github.com/lifebit-ai/traits/workflows/nf-core%20linting/badge.svg)](https://github.com/lifebit-ai/traits/actions)
-[![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A519.10.0-brightgreen.svg)](https://www.nextflow.io/)
+[![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A519.10.0-brightgreen.svg)](https://www.nextflow.io/) [![Docker](https://img.shields.io/docker/automated/nfcore/traits.svg)](https://hub.docker.com/r/nfcore/traits)
 
-[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/)
-[![Docker](https://img.shields.io/docker/automated/nfcore/traits.svg)](https://hub.docker.com/r/nfcore/traits)
-[![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23traits-4A154B?logo=slack)](https://nfcore.slack.com/channels/traits)
 
 ## Introduction
 
@@ -23,17 +18,15 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 3. Download the pipeline and test it on a minimal dataset with a single command:
 
     ```bash
-    nextflow run lifebit-ai/traits -profile test,<docker/singularity/conda/institute>
+    nextflow run lifebit-ai/traits -profile test
     ```
-
-    > Please check [nf-core/configs](https://github.com/nf-core/configs#documentation) to see if a custom config file to run nf-core pipelines already exists for your Institute. If so, you can simply use `-profile <institute>` in your command. This will enable either `docker` or `singularity` and set the appropriate execution settings for your local compute environment.
 
 4. Start running your own analysis!
 
     <!-- TODO nf-core: Update the example "typical command" below used to run the pipeline -->
 
     ```bash
-    nextflow run lifebit-ai/traits -profile <docker/singularity/conda/institute> --input '*_R{1,2}.fastq.gz' --genome GRCh37
+    nextflow run lifebit-ai/traits --input 'input.tx'
     ```
 
 See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
@@ -46,13 +39,14 @@ The lifebit-ai/traits pipeline comes with documentation about the pipeline which
 
 ## Credits
 
-lifebit-ai/traits was originally written by Marcos Cámara Donoso, Christina Chatzipantsiou, Athanasios Kousathanas.
+`lifebit-ai/traits` was originally written by Marcos Cámara Donoso, Christina Chatzipantsiou, Athanasios Kousathanas.
 
 ## Contributions and Support
 
 If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
-For further information or help, don't hesitate to get in touch on the [Slack `#traits` channel](https://nfcore.slack.com/channels/traits) (you can join with [this invite](https://nf-co.re/join/slack)).
+
+> <img src="https://raw.githubusercontent.com/nf-core/logos/master/nf-core-logos/nf-core-logo-square.svg" width="20"/></a> **NOTE**: This pipeline was created using the nf-core template.  For further information or help with nf-core pipelines, you can get in touch with the core developers and community on [Slack](https://nfcore.slack.com/channels/lifebit-ai/traits) (you can join with [this invite](https://nf-co.re/join/slack)).
 
 ## Citation
 
