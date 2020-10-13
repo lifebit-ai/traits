@@ -34,13 +34,13 @@ jobs:
 
       - name: Build new docker image
         if: env.GIT_DIFF
-        run: docker build --no-cache . -t nfcore/traits:dev
+        run: docker build --no-cache . -t lifebit-ai/traits:dev
 
       - name: Pull docker image
         if: ${{ !env.GIT_DIFF }}
         run: |
-          docker pull nfcore/traits:dev
-          docker tag nfcore/traits:dev nfcore/traits:dev
+          docker pull lifebit-ai/traits:dev
+          docker tag lifebit-ai/traits:dev lifebit-ai/traits:dev
 
       - name: Install Nextflow
         run: |

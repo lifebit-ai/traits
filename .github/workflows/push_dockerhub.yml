@@ -22,19 +22,19 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build new docker image
-        run: docker build --no-cache . -t nfcore/traits:latest
+        run: docker build --no-cache . -t lifebit-ai/traits:latest
 
       - name: Push Docker image to DockerHub (dev)
         if: ${{ github.event_name == 'push' }}
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-          docker tag nfcore/traits:latest nfcore/traits:dev
-          docker push nfcore/traits:dev
+          docker tag lifebit-ai/traits:latest lifebit-ai/traits:dev
+          docker push lifebit-ai/traits:dev
 
       - name: Push Docker image to DockerHub (release)
         if: ${{ github.event_name == 'release' }}
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-          docker push nfcore/traits:latest
-          docker tag nfcore/traits:latest nfcore/traits:${{ github.event.release.tag_name }}
-          docker push nfcore/traits:${{ github.event.release.tag_name }}
+          docker push lifebit-ai/traits:latest
+          docker tag lifebit-ai/traits:latest lifebit-ai/traits:${{ github.event.release.tag_name }}
+          docker push lifebit-ai/traits:${{ github.event.release.tag_name }}

@@ -38,7 +38,7 @@ Steps to reproduce the behaviour:
 
 - Engine: <!-- [e.g. Conda, Docker or Singularity] -->
 - version: <!-- [e.g. 1.0.0] -->
-- Image tag: <!-- [e.g. nfcore/traits:1.0.0] -->
+- Image tag: <!-- [e.g. lifebit-ai/traits:1.0.0] -->
 
 ## Additional context
 
