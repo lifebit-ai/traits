@@ -15,3 +15,9 @@ RUN conda env export --name nf-core-traits-1.0dev > nf-core-traits-1.0dev.yml
 # Instruct R processes to use these empty files instead of clashing with a local version
 RUN touch .Rprofile
 RUN touch .Renviron
+
+# Copy additonal scripts
+RUN mkdir -p /opt/bin
+COPY bin/* /opt/bin/
+RUN chmod +x /opt/bin/*
+ENV PATH="$PATH:/opt/bin/"
