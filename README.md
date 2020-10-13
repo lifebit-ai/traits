@@ -4,7 +4,6 @@
 
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A519.10.0-brightgreen.svg)](https://www.nextflow.io/) [![Docker](https://img.shields.io/docker/automated/lifebit-ai/traits.svg)](https://hub.docker.com/r/lifebit-ai/traits)
 
-
 ## Introduction
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
@@ -45,8 +44,7 @@ The lifebit-ai/traits pipeline comes with documentation about the pipeline which
 
 If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
-
-> <img src="https://raw.githubusercontent.com/nf-core/logos/master/nf-core-logos/nf-core-logo-square.svg" width="20"/></a> **NOTE**: This pipeline was created using the nf-core template.  For further information or help with nf-core pipelines, you can get in touch with the core developers and community on [Slack](https://nfcore.slack.com/channels/lifebit-ai/traits) (you can join with [this invite](https://nf-co.re/join/slack)).
+> **NOTE**: This pipeline was created using the nf-core template.  For further information or help with nf-core pipelines, you can get in touch with the core developers and community on [Slack](https://nfcore.slack.com/channels/lifebit-ai/traits) (you can join with [this invite](https://nf-co.re/join/slack)).
 
 ## Citation
 
