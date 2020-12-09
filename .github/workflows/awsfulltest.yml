@@ -9,7 +9,7 @@ on:
 jobs:
   run-awstest:
     name: Run AWS full tests
-    if: github.repository == 'nf-core/traits'
+    if: github.repository == 'lifebit-ai/traits'
     runs-on: ubuntu-latest
     steps:
       - name: Setup Miniconda
@@ -37,4 +37,3 @@ jobs:
             --job-name nf-core-traits \
             --job-queue $AWS_JOB_QUEUE \
             --job-definition $AWS_JOB_DEFINITION \
-            --container-overrides '{"command": ["nf-core/traits", "-r '"${GITHUB_SHA}"' -profile test --outdir s3://'"${AWS_S3_BUCKET}"'/traits/results-'"${GITHUB_SHA}"' -w s3://'"${AWS_S3_BUCKET}"'/traits/work-'"${GITHUB_SHA}"' -with-tower"], "environment": [{"name": "TOWER_ACCESS_TOKEN", "value": "'"$TOWER_ACCESS_TOKEN"'"}]}'

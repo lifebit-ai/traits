@@ -1,6 +1,6 @@
 FROM nfcore/base:1.10.2
 LABEL authors="Marcos Cámara Donoso, Christina Chatzipantsiou, Athanasios Kousathanas" \
-      description="Docker image containing all software requirements for the nf-core/traits pipeline"
+      description="Docker image containing all software requirements for the lifebit-ai/traits pipeline"
 
 # Install the conda environment
 COPY environment.yml /
@@ -15,3 +15,9 @@ RUN conda env export --name nf-core-traits-1.0dev > nf-core-traits-1.0dev.yml
 # Instruct R processes to use these empty files instead of clashing with a local version
 RUN touch .Rprofile
 RUN touch .Renviron
+
+# Copy additonal scripts
+RUN mkdir -p /opt/bin
+COPY bin/* /opt/bin/
+RUN chmod +x /opt/bin/*
+ENV PATH="$PATH:/opt/bin/"
