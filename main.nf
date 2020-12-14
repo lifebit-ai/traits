@@ -199,76 +199,252 @@ process get_software_versions {
     """
 }
 
-/*
- * STEP 1 - FastQC
- */
-process fastqc {
-    tag "$name"
-    label 'process_medium'
-    publishDir "${params.outdir}/fastqc", mode: params.publish_dir_mode,
-        saveAs: { filename ->
-                      filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"
-                }
+/*--------------------------------------------------
+  LDSC - Genetic correlation and heritability
+---------------------------------------------------*/
+if (params.post_analysis == 'heritability' || params.post_analysis == 'genetic_correlation_h2'){
+  process prepare_files_ldsc {
+    tag "preparation_files"
+    publishDir "${params.outdir}/ldsc_inputs/", mode: 'copy'
 
     input:
-    set val(name), file(reads) from ch_read_files_fastqc
+    set file("*top_n.csv"), file(summary_stats) from ch_ldsc_input
 
     output:
-    file "*_fastqc.{zip,html}" into ch_fastqc_results
+    file("${params.output_tag}_transformed_gwas_stats.txt") into ch_ldsc_input2
+
+    script:
+
+    """
+    convert_output.R \
+      --gwas_stats "$summary_stats" \
+      --output_tag ${params.output_tag}
+    """
+  }
+  process munge_saige_output {
+    tag "munge_saige_output"
+    publishDir "${params.outdir}/ldsc_inputs/", mode: 'copy'
+
+    input:
+    file(saige_summary_stats) from ch_ldsc_input2
+    file(hapmap3_snplist) from ch_hapmap3_snplist
+
+    output:
+    file("${params.output_tag}_ldsc.sumstats.gz") into ch_saige_ldsc
+
+    script:
+
+    """
+    munge_sumstats.py --sumstats $saige_summary_stats \
+                      --out "${params.output_tag}_ldsc" \
+                      --merge-alleles $hapmap3_snplist \
+                      --a1 Allele1 \
+                      --a2 Allele2 \
+                      --signed-sumstats BETA,0 \
+                      --p p.value \
+                      --snp SNPID \
+                      --info inputationInfo
+    """
+  }
+}
+
+if (params.post_analysis == 'heritability'){
+
+  process heritability {
+    tag "heritability"
+    publishDir "${params.outdir}/heritability/", mode: 'copy'
+
+    input:
+    file(saige_output) from ch_saige_ldsc
+    file(ld_scores_tar_bz2) from ch_ld_scores_tar_bz2
+
+    output:
+    file("${params.output_tag}_h2.log") into ch_ldsc_report_input
 
     script:
     """
-    fastqc --quiet --threads $task.cpus $reads
+    tar -xvjf ${ld_scores_tar_bz2}
+
+    ldsc.py \
+      --h2 $saige_output \
+      --ref-ld-chr ${ld_scores_tar_bz2.simpleName}/ \
+      --w-ld-chr ${ld_scores_tar_bz2.simpleName}/ \
+      --out ${params.output_tag}_h2
     """
+  }
 }
 
-/*
- * STEP 2 - MultiQC
- */
-process multiqc {
-    publishDir "${params.outdir}/MultiQC", mode: params.publish_dir_mode
+if (params.post_analysis == 'genetic_correlation_h2' && params.gwas_summary){
+  process prepare_gwas_summary_ldsc {
+    tag "preparation_gwas_summary_ldsc"
+    publishDir "${params.outdir}/ldsc_inputs/", mode: 'copy'
 
     input:
-    file (multiqc_config) from ch_multiqc_config
-    file (mqc_custom_config) from ch_multiqc_custom_config.collect().ifEmpty([])
-    // TODO nf-core: Add in log files from your new processes for MultiQC to find!
-    file ('fastqc/*') from ch_fastqc_results.collect().ifEmpty([])
-    file ('software_versions/*') from ch_software_versions_yaml.collect()
-    file workflow_summary from ch_workflow_summary.collectFile(name: "workflow_summary_mqc.yaml")
+    file(gwas_summary_file) from ch_gwas_summary
 
     output:
-    file "*multiqc_report.html" into ch_multiqc_report
-    file "*_data"
-    file "multiqc_plots"
+    file("${params.external_gwas_tag}_transformed_gwas_stats.txt") into ch_gwas_summary_ldsc
 
     script:
-    rtitle = custom_runName ? "--title \"$custom_runName\"" : ''
-    rfilename = custom_runName ? "--filename " + custom_runName.replaceAll('\\W','_').replaceAll('_+','_') + "_multiqc_report" : ''
-    custom_config_file = params.multiqc_config ? "--config $mqc_custom_config" : ''
-    // TODO nf-core: Specify which MultiQC modules to use with -m for a faster run time
-    """
-    multiqc -f $rtitle $rfilename $custom_config_file .
-    """
-}
 
-/*
- * STEP 3 - Output Description HTML
- */
-process output_documentation {
-    publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode
+    """
+    convert_output.R \
+      --gwas_stats "$gwas_summary_file" \
+      --output_tag "${params.external_gwas_tag}"
+    """
+  }
+  //* Munge gwas stats
+
+  process munge_gwas_summary {
+    tag "munge_gwas_summary"
+    publishDir "${params.outdir}/ldsc_inputs/", mode: 'copy'
 
     input:
-    file output_docs from ch_output_docs
-    file images from ch_output_docs_images
+    file(summary_stats) from ch_gwas_summary_ldsc
+    file(hapmap3_snplist) from ch_hapmap3_snplist
 
     output:
-    file "results_description.html"
+    file("${params.external_gwas_tag}_gwas_summary.sumstats.gz") into ch_gwas_summary_ldsc2
+
+    script:
+
+    """
+    munge_sumstats.py \
+          --sumstats "$summary_stats" \
+          --out "${params.external_gwas_tag}_gwas_summary" \
+          --merge-alleles $hapmap3_snplist
+    """
+  }
+
+  //* Run genetic correlation
+  process genetic_correlation_h2 {
+    tag "genetic_correlation_h2"
+    publishDir "${params.outdir}/genetic_correlation/", mode: 'copy'
+
+    input:
+    file(gwas_summary_ldsc) from ch_gwas_summary_ldsc2
+    file(saige_ldsc) from ch_saige_ldsc
+    file(ld_scores_tar_bz2) from ch_ld_scores_tar_bz2
+
+    output:
+    file("${params.output_tag}_genetic_correlation.log") into ch_ldsc_report_input
+
+    script:
+
+    """
+    tar -xvjf ${ld_scores_tar_bz2}
+
+    ldsc.py \
+          --rg $saige_ldsc,$gwas_summary_ldsc \
+          --ref-ld-chr ${ld_scores_tar_bz2.simpleName}/ \
+          --w-ld-chr ${ld_scores_tar_bz2.simpleName}/ \
+          --out ${params.output_tag}_genetic_correlation \
+          --no-intercept
+    """
+  }
+
+}
+
+ //* gwas catalogue
+
+if (params.post_analysis == 'genetic_correlation_h2' && params.gwas_cat_study_id){
+
+  gwas_catalogue_ftp_ch = Channel.fromPath(params.gwas_catalogue_ftp, checkIfExists: true)
+    .ifEmpty { exit 1, "GWAS catalogue ftp locations not found: ${params.gwas_catalogue_ftp}" }
+    .splitCsv(header: true)
+    .map { row -> tuple(row.study_accession, row.ftp_link_harmonised_summary_stats) }
+    .filter{ it[0] == params.gwas_cat_study_id}
+    .ifEmpty { exit 1, "The GWAS study accession number you provided does not come as a harmonized dataset that can be used as a base cohort "}
+    .flatten()
+    .last()
+
+  process download_gwas_catalogue {
+    label "high_memory"
+    publishDir "${params.outdir}/GWAS_cat", mode: "copy"
+    
+    input:
+    val(ftp_link) from gwas_catalogue_ftp_ch
+    
+    output:
+    file("*.h.tsv*") into downloaded_gwas_catalogue_ch
+    
+    script:
+    """
+    wget ${ftp_link}
+    """
+  }
+
+  process transform_gwas_catalogue {
+    label "high_memory"
+    publishDir "${params.outdir}/GWAS_cat", mode: "copy"
+    
+    input:
+    file gwas_catalogue_base from downloaded_gwas_catalogue_ch
+    
+    output:
+    file("${params.gwas_cat_study_id}.data") into transformed_base_ch
+    
+    script:
+    """
+    transform_gwas_catalogue.R --input_gwas_cat "${gwas_catalogue_base}" \
+                               --outprefix "${params.gwas_cat_study_id}"
+    """
+    }
+
+  
+  //* Munge gwas cat stats
+
+  process munge_gwas_cat_summary {
+    tag "munge_gwas_summary"
+    publishDir "${params.outdir}/ldsc_inputs/", mode: 'copy'
+
+    input:
+    file(summary_stats) from transformed_base_ch
+    file(hapmap3_snplist) from ch_hapmap3_snplist
+
+    output:
+    file("${params.gwas_cat_study_id}_gwas_summary.sumstats.gz") into ch_gwas_summary_ldsc2
+
+    script:
+
+    """
+    munge_sumstats.py \
+          --sumstats "$summary_stats" \
+          --out "${params.gwas_cat_study_id}_gwas_summary" \
+          --merge-alleles $hapmap3_snplist \
+          --signed-sumstats BETA,0 \
+          --N ${params.gwas_cat_study_size}
+    """
+  }
+
+  //* Run genetic correlation
+  process genetic_correlation_h2_gwas_cat {
+    tag "genetic_correlation_h2"
+    publishDir "${params.outdir}/genetic_correlation/", mode: 'copy'
+
+    input:
+    file(gwas_summary_ldsc) from ch_gwas_summary_ldsc2
+    file(saige_ldsc) from ch_saige_ldsc
+    file(ld_scores_tar_bz2) from ch_ld_scores_tar_bz2
+
+    output:
+    file("${params.output_tag}_genetic_correlation.log") into ch_ldsc_report_input
 
     script:
     """
-    markdown_to_html.py $output_docs -o results_description.html
+    tar -xvjf ${ld_scores_tar_bz2}
+
+    ldsc.py \
+          --rg $saige_ldsc,$gwas_summary_ldsc \
+          --ref-ld-chr ${ld_scores_tar_bz2.simpleName}/ \
+          --w-ld-chr ${ld_scores_tar_bz2.simpleName}/ \
+          --out ${params.output_tag}_genetic_correlation \
+          --no-intercept
     """
+  }
+
 }
+
 
 /*
  * Completion e-mail notification
