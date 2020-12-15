@@ -9,7 +9,7 @@ Runs heritability in your GWAS summary statistics as well as computing the genet
 The typical command for running the pipeline is as follows:
 
 ```bash
-nextflow run lifebit-ai/traits --input '*_R{1,2}.fastq.gz' -profile docker
+nextflow run lifebit-ai/traits -profile binary_h2
 ```
 
 ## 1 - Information about the method & how it is used
@@ -39,3 +39,10 @@ rs7523549	1	869180	T	C	1.823	0.8756	0.4929	0.13	0	0.0137615
 
 - **--post_analysis** : String with `genetic_correlation_h2` or `heritability` for running genetic correlation analysis or heritability after GWAS.
 - **--gwas_summary** : Path/URL to external gwas summary statistics to run genetic correlation analysis between cohort of interest and external GWAS summary statistics. The following column names and format (can also be comma-separated instead of whitespace-separated) are required to ensure it works:
+- **--output_tag** : String with tag for files
+- **--gwas_cat_study_id** : String with ID from GWAS catalogue study to be used as input for genetic correlation
+- **--gwas_cat_study_size**  : Integer with size of study being used for genetic correlation
+- **--gwas_catalogue_ftp** : Path to ftp locations of harmonized GWAS catalogue studies. Defaults to "https://lifebit-featured-datasets.s3-eu-west-1.amazonaws.com/projects/gel/prs/ftp_locations_harmonized.csv"
+- **--hapmap3_snplist** : Path to snp list from hapmap3 to be used for analysis. Defaults to "https://lifebit-featured-datasets.s3-eu-west-1.amazonaws.com/projects/gel/gel-gwas/assets/w_hm3.snplist"
+- **--ld_scores_tar_bz2** : Path to precomputed LD scores from Defaults to the European 1000 Genomes cohort at "https://lifebit-featured-datasets.s3-eu-west-1.amazonaws.com/projects/gel/gel-gwas/assets/eur_w_ld_chr.tar.bz2"
+- **--outdir** : Path to output directory. Defaults to './results'

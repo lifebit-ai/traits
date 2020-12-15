@@ -17,7 +17,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 3. Download the pipeline and test it on a minimal dataset with a single command:
 
     ```bash
-    nextflow run lifebit-ai/traits -profile test
+    nextflow run lifebit-ai/traits -profile binary_h2
     ```
 
 4. Start running your own analysis!
@@ -25,7 +25,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
     <!-- TODO nf-core: Update the example "typical command" below used to run the pipeline -->
 
     ```bash
-    nextflow run lifebit-ai/traits --input 'input.tx'
+    nextflow run lifebit-ai/traits --input_file '<path to file>' --post_analysis 'heritability' --hapmap3_snplist '<path to file>' --ld_scores_tar_bz2 "<path to tar.bz2 file with LD scores>"
     ```
 
 See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
