@@ -1,15 +1,27 @@
 # You can use this file to create a conda environment for this pipeline:
 #   conda env create -f environment.yml
-name: nf-core-traits-1.0dev
+name: traits
 channels:
   - conda-forge
   - bioconda
   - defaults
 dependencies:
-  - conda-forge::python=3.7.3
-  - conda-forge::markdown=3.1.1
-  - conda-forge::pymdown-extensions=6.0
-  - conda-forge::pygments=2.5.2
-  # TODO nf-core: Add required software dependencies here
-  - bioconda::fastqc=0.11.8
-  - bioconda::multiqc=1.7
+  - bioconda::python=2.7
+  - bioconda::bitarray=0.8
+  - bioconda::nose=1.3
+  - bioconda::pybedtools=0.7
+  - bioconda::pip
+  - pip:
+    - scipy==0.18
+    - pandas==0.20
+    - numpy==1.16
+  - r-base
+  - r-irkernel
+  - r-devtools
+  - r-kableextra
+  - r-htmltools
+  - cairo
+  - fonts-anaconda=1
+  - r-data.table
+  - r-tidyverse
+  - conda-forge::r-optparse

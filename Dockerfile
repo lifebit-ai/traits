@@ -19,22 +19,31 @@ RUN apt-get update && \
               speedtest-cli \
               procps
 
+COPY environment.yml /
+RUN conda env create -f /environment.yml && conda clean -a
+ENV PATH /opt/conda/envs/traits/bin:$PATH
+
 RUN git clone https://github.com/bulik/ldsc.git && \
-    cd ldsc && \
-    conda env create --quiet -f environment.yml && conda clean -a
+    cd ldsc
 
 # Correct the shebang of the files to point to python2
 RUN for i in `ls /ldsc/*py` ; do sed -i 's/python/python2/g'  $i; done
 RUN for i in `ls /ldsc/ldscore/*py | grep -v __init__` ; do sed -i '1 i #!/usr/bin/env python2' $i ; done
 
-ENV PATH /opt/conda/envs/ldsc/bin:$PATH
+RUN mkdir /opt/bin
+COPY bin/* /opt/bin/
 
-RUN find /ldsc/ -type f -iname "*.py" -exec chmod +x {} \;
+RUN find /ldsc/ -type f -iname "*.py" -exec chmod +x {} \; && \
+    find /opt/bin/ -type f -iname "*.R" -exec chmod +x {} \;
+
 RUN touch .Rprofile
 RUN touch .Renviron
 
-#Add assets/ folder
-RUN mkdir /assets/
-COPY assets/* /assets/
-
 ENV PATH="$PATH:/ldsc/"
+ENV PATH="$PATH:/opt/bin/"
+
+USER root
+
+WORKDIR /data/
+
+CMD ["bash"]

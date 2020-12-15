@@ -1,55 +1,95 @@
-name: nf-core CI
+name: tests for lifebit-ai/traits
 # This workflow runs the pipeline with the minimal test dataset to check that it completes without any syntax errors
-on:
-  push:
-    branches:
-      - dev
-  pull_request:
-  release:
-    types: [published]
+on: [push, pull_request]
 
 jobs:
-  test:
-    name: Run workflow tests
-    # Only run on push if this is the nf-core dev branch (merged PRs)
-    if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'lifebit-ai/traits') }}
+  binary_h2:
     runs-on: ubuntu-latest
-    env:
-      NXF_VER: ${{ matrix.nxf_ver }}
-      NXF_ANSI_LOG: false
     strategy:
       matrix:
-        # Nextflow versions: check pipeline minimum and current latest
-        nxf_ver: ['19.10.0', '']
+        nxf_ver: ['20.01.0', '']
     steps:
-      - name: Check out pipeline code
-        uses: actions/checkout@v2
-
-      - name: Check if Dockerfile or Conda environment changed
-        uses: technote-space/get-diff-action@v1
-        with:
-          PREFIX_FILTER: |
-            Dockerfile
-            environment.yml
-
-      - name: Build new docker image
-        if: env.GIT_DIFF
-        run: docker build --no-cache . -t lifebit-ai/traits:dev
-
-      - name: Pull docker image
-        if: ${{ !env.GIT_DIFF }}
-        run: |
-          docker pull lifebit-ai/traits:dev
-          docker tag lifebit-ai/traits:dev lifebit-ai/traits:dev
-
+      - uses: actions/checkout@v2
       - name: Install Nextflow
         run: |
+          export NXF_VER=${{ matrix.nxf_ver }}
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
-
-      - name: Run pipeline with test data
-        # TODO nf-core: You can customise CI pipeline run tests as required
-        # For example: adding multiple test runs with different parameters
-        # Remember that you can parallelise this by using strategy.matrix
+      - name: Binary trait and heritability
         run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile test,docker
+          nextflow run ${GITHUB_WORKSPACE} -profile binary_h2
+  binary_gwas_catalogue:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        nxf_ver: ['20.01.0', '']
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install Nextflow
+        run: |
+          export NXF_VER=${{ matrix.nxf_ver }}
+          wget -qO- get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+      - name: Binary trait and genetic correlation against GWAS cat summary stats
+        run: |
+          nextflow run ${GITHUB_WORKSPACE} -profile binary_gwas_catalogue
+  binary_genetic_correlation_h2:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        nxf_ver: ['20.01.0', '']
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install Nextflow
+        run: |
+          export NXF_VER=${{ matrix.nxf_ver }}
+          wget -qO- get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+      - name: Binary trait with genetic correlation against quantitative trait
+        run: |
+          nextflow run ${GITHUB_WORKSPACE} -profile binary_genetic_correlation_h2
+  qt_h2:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        nxf_ver: ['20.01.0', '']
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install Nextflow
+        run: |
+          export NXF_VER=${{ matrix.nxf_ver }}
+          wget -qO- get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+      - name: Quantitative trait with H2
+        run: |
+          nextflow run ${GITHUB_WORKSPACE} -profile qt_h2
+  qt_gwas_catalogue:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        nxf_ver: ['20.01.0', '']
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install Nextflow
+        run: |
+          export NXF_VER=${{ matrix.nxf_ver }}
+          wget -qO- get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+      - name: Test with quantitative trait and genetic correlation using GWAS catalogue summary stats
+        run: |
+          nextflow run ${GITHUB_WORKSPACE} -profile qt_gwas_catalogue
+  qt_genetic_correlation_h2:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        nxf_ver: ['20.01.0', '']
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install Nextflow
+        run: |
+          export NXF_VER=${{ matrix.nxf_ver }}
+          wget -qO- get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+      - name: Test with quantitative trait and genetic correlation using qt trait
+        run: |
+          nextflow run ${GITHUB_WORKSPACE} -profile qt_genetic_correlation_h2
