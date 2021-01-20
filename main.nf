@@ -26,9 +26,9 @@ def helpMessage() {
     
     Optional parameters:
     --external_gwas_statistics                   Path to second summary statistics to be used for genetic correlation                     
-    --gwas_cat_study_id              String containing GWAS catalogue study id
-    --gwas_cat_study_size            Integer describing size of GWAS study
-    --gwas_catalogue_ftp             Path to csv containing ftp locations of gwas catalogue files
+    --external_gwas_cat_study_id              String containing GWAS catalogue study id
+    --external_gwas_cat_study_size            Integer describing size of GWAS study
+    --external_gwas_cat_ftp             Path to csv containing ftp locations of gwas catalogue files
     --hapmap3_snplist                Path to SNP list from Hapmap needed for seleting SNPs considered for analysis
     --ld_scores_tar_bz2              Path to tar.bz2 files with precomputed LD scores
     --outdir                         Path to output directory
@@ -65,9 +65,9 @@ summary['User']                           = workflow.userName
 summary['post_analysis']                  = params.post_analysis
 summary['input_gwas_statistics']                     = params.input_gwas_statistics
 summary['external_gwas_statistics']                   = params.external_gwas_statistics
-summary['gwas_cat_study_id']              = params.gwas_cat_study_id
-summary['gwas_cat_study_size']            = params.gwas_cat_study_size
-summary['gwas_catalogue_ftp']             = params.gwas_catalogue_ftp
+summary['external_gwas_cat_study_id']              = params.external_gwas_cat_study_id
+summary['external_gwas_cat_study_size']            = params.external_gwas_cat_study_size
+summary['external_gwas_cat_ftp']             = params.external_gwas_cat_ftp
 summary['hapmap3_snplist']                = params.hapmap3_snplist
 summary['ld_scores_tar_bz2']              = params.ld_scores_tar_bz2
 summary['output_tag']                     = params.output_tag
@@ -233,13 +233,13 @@ if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_sta
 
  //* gwas catalogue
 
-if (params.post_analysis == 'genetic_correlation_h2' && params.gwas_cat_study_id){
+if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_cat_study_id){
 
-  gwas_catalogue_ftp_ch = Channel.fromPath(params.gwas_catalogue_ftp, checkIfExists: true)
-    .ifEmpty { exit 1, "GWAS catalogue ftp locations not found: ${params.gwas_catalogue_ftp}" }
+  external_gwas_cat_ftp_ch = Channel.fromPath(params.external_gwas_cat_ftp, checkIfExists: true)
+    .ifEmpty { exit 1, "GWAS catalogue ftp locations not found: ${params.external_gwas_cat_ftp}" }
     .splitCsv(header: true)
     .map { row -> tuple(row.study_accession, row.ftp_link_harmonised_summary_stats) }
-    .filter{ it[0] == params.gwas_cat_study_id}
+    .filter{ it[0] == params.external_gwas_cat_study_id}
     .ifEmpty { exit 1, "The GWAS study accession number you provided does not come as a harmonized dataset that can be used as a base cohort "}
     .flatten()
     .last()
@@ -249,7 +249,7 @@ if (params.post_analysis == 'genetic_correlation_h2' && params.gwas_cat_study_id
     publishDir "${params.outdir}/GWAS_cat", mode: "copy"
     
     input:
-    val(ftp_link) from gwas_catalogue_ftp_ch
+    val(ftp_link) from external_gwas_cat_ftp_ch
     
     output:
     file("*.h.tsv*") into downloaded_gwas_catalogue_ch
@@ -268,12 +268,12 @@ if (params.post_analysis == 'genetic_correlation_h2' && params.gwas_cat_study_id
     file gwas_catalogue_base from downloaded_gwas_catalogue_ch
     
     output:
-    file("${params.gwas_cat_study_id}.data") into transformed_base_ch
+    file("${params.external_gwas_cat_study_id}.data") into transformed_base_ch
     
     script:
     """
     transform_gwas_catalogue.R --input_gwas_cat "${gwas_catalogue_base}" \
-                               --outprefix "${params.gwas_cat_study_id}"
+                               --outprefix "${params.external_gwas_cat_study_id}"
     """
     }
 
@@ -289,17 +289,17 @@ if (params.post_analysis == 'genetic_correlation_h2' && params.gwas_cat_study_id
     file(hapmap3_snplist) from ch_hapmap3_snplist
 
     output:
-    file("${params.gwas_cat_study_id}_gwas_summary.sumstats.gz") into ch_gwas_summary_ldsc2
+    file("${params.external_gwas_cat_study_id}_gwas_summary.sumstats.gz") into ch_gwas_summary_ldsc2
 
     script:
 
     """
     munge_sumstats.py \
           --sumstats "$summary_stats" \
-          --out "${params.gwas_cat_study_id}_gwas_summary" \
+          --out "${params.external_gwas_cat_study_id}_gwas_summary" \
           --merge-alleles $hapmap3_snplist \
           --signed-sumstats BETA,0 \
-          --N ${params.gwas_cat_study_size}
+          --N ${params.external_gwas_cat_study_size}
     """
   }
 
