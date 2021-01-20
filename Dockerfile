@@ -23,8 +23,7 @@ COPY environment.yml /
 RUN conda env create -f /environment.yml && conda clean -a
 ENV PATH /opt/conda/envs/traits/bin:$PATH
 
-RUN git clone https://github.com/bulik/ldsc.git && \
-    cd ldsc
+RUN git clone https://github.com/bulik/ldsc.git
 
 # Correct the shebang of the files to point to python2
 RUN for i in `ls /ldsc/*py` ; do sed -i 's/python/python2/g'  $i; done

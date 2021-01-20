@@ -21,7 +21,7 @@ Vignette: https://github.com/bulik/ldsc/wiki/Heritability-and-Genetic-Correlatio
 ## 2 - Parameters:
 ### 2.1 - Required parameters
 - **--post_analysis** : String with `genetic_correlation_h2` or `heritability` for running genetic correlation analysis or heritability after GWAS.
-- **--gwas_summary** : Path/URL to external gwas summary statistics to run genetic correlation analysis between cohort of interest and external GWAS summary statistics. The following column names and format (can also be comma-separated instead of whitespace-separated) are required to ensure it works:
+- **--external_gwas_statistics** : Path/URL to external gwas summary statistics to run genetic correlation analysis between cohort of interest and external GWAS summary statistics. The following column names and format (can also be comma-separated instead of whitespace-separated) are required to ensure it works:
 ```
 snpid hg18chr bp a1 a2 or se pval info ngt CEUaf
 rs3131972	1	742584	A	G	1.092	0.0817	0.2819	0.694	0	0.16055
@@ -38,7 +38,7 @@ rs7523549	1	869180	T	C	1.823	0.8756	0.4929	0.13	0	0.0137615
 ### 2.2 - Optional parameters
 
 - **--post_analysis** : String with `genetic_correlation_h2` or `heritability` for running genetic correlation analysis or heritability after GWAS.
-- **--gwas_summary** : Path/URL to external gwas summary statistics to run genetic correlation analysis between cohort of interest and external GWAS summary statistics. The following column names and format (can also be comma-separated instead of whitespace-separated) are required to ensure it works:
+- **--external_gwas_statistics** : Path/URL to external gwas summary statistics to run genetic correlation analysis between cohort of interest and external GWAS summary statistics. The following column names and format (can also be comma-separated instead of whitespace-separated) are required to ensure it works:
 - **--output_tag** : String with tag for files
 - **--gwas_cat_study_id** : String with ID from GWAS catalogue study to be used as input for genetic correlation
 - **--gwas_cat_study_size**  : Integer with size of study being used for genetic correlation

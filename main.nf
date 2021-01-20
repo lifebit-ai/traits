@@ -19,13 +19,13 @@ def helpMessage() {
     
     Usage:
     The typical command for running the pipeline is as follows:
-    nextflow run main.nf --post_analysis heritability --input_file 
+    nextflow run main.nf --post_analysis heritability --input_gwas_statistics 
     Essential parameters:
     --post_analysis                  Type of analysis desired. Options are 'heritability' or 'genetic_correlation_h2'
-    --input_file                     path to summary statistics from gwas. Currently compatible with SAIGE
+    --input_gwas_statistics                     path to summary statistics from gwas. Currently compatible with SAIGE
     
     Optional parameters:
-    --gwas_summary                   Path to second summary statistics to be used for genetic correlation                     
+    --external_gwas_statistics                   Path to second summary statistics to be used for genetic correlation                     
     --gwas_cat_study_id              String containing GWAS catalogue study id
     --gwas_cat_study_size            Integer describing size of GWAS study
     --gwas_catalogue_ftp             Path to csv containing ftp locations of gwas catalogue files
@@ -63,13 +63,13 @@ summary['Script dir']                     = workflow.projectDir
 summary['User']                           = workflow.userName
 
 summary['post_analysis']                  = params.post_analysis
-summary['input_file']                     = params.input_file
-summary['gwas_summary']                   = params.gwas_summary
+summary['input_gwas_statistics']                     = params.input_gwas_statistics
+summary['external_gwas_statistics']                   = params.external_gwas_statistics
 summary['gwas_cat_study_id']              = params.gwas_cat_study_id
 summary['gwas_cat_study_size']            = params.gwas_cat_study_size
 summary['gwas_catalogue_ftp']             = params.gwas_catalogue_ftp
 summary['hapmap3_snplist']                = params.hapmap3_snplist
-summary['ld_scores_tar_bz2']              = params.ld_scores_taR_bz2
+summary['ld_scores_tar_bz2']              = params.ld_scores_tar_bz2
 summary['output_tag']                     = params.output_tag
 summary['outdir']                         = params.outdir
 
@@ -80,10 +80,10 @@ log.info "-\033[2m--------------------------------------------------\033[0m-"
   Channel preparation
 ---------------------------------------------------*/
 
-ch_ldsc_input = params.input_file ? Channel.value(file(params.input_file)) : Channel.empty()
+ch_ldsc_input = params.input_gwas_statistics ? Channel.value(file(params.input_gwas_statistics)) : Channel.empty()
 ch_hapmap3_snplist =  params.hapmap3_snplist ? Channel.value(file(params.hapmap3_snplist)) :  "null"
 ch_ld_scores_tar_bz2 =  params.ld_scores_tar_bz2 ? Channel.value(file(params.ld_scores_tar_bz2)) :  "null"
-ch_gwas_summary = params.gwas_summary ? Channel.value(file(params.gwas_summary)) : Channel.empty()
+ch_gwas_summary = params.external_gwas_statistics ? Channel.value(file(params.external_gwas_statistics)) : Channel.empty()
 
 /*--------------------------------------------------
   LDSC - Genetic correlation and heritability
@@ -160,7 +160,7 @@ if (params.post_analysis == 'heritability'){
   }
 }
 
-if (params.post_analysis == 'genetic_correlation_h2' && params.gwas_summary){
+if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_statistics){
   process prepare_gwas_summary_ldsc {
     tag "preparation_gwas_summary_ldsc"
     publishDir "${params.outdir}/ldsc_inputs/", mode: 'copy'
@@ -331,125 +331,6 @@ if (params.post_analysis == 'genetic_correlation_h2' && params.gwas_cat_study_id
 
 }
 
-
-/*
- * Completion e-mail notification
- */
-workflow.onComplete {
-
-    // Set up the e-mail variables
-    def subject = "[lifebit-ai/traits] Successful: $workflow.runName"
-    if (!workflow.success) {
-        subject = "[lifebit-ai/traits] FAILED: $workflow.runName"
-    }
-    def email_fields = [:]
-    email_fields['version'] = workflow.manifest.version
-    email_fields['runName'] = custom_runName ?: workflow.runName
-    email_fields['success'] = workflow.success
-    email_fields['dateComplete'] = workflow.complete
-    email_fields['duration'] = workflow.duration
-    email_fields['exitStatus'] = workflow.exitStatus
-    email_fields['errorMessage'] = (workflow.errorMessage ?: 'None')
-    email_fields['errorReport'] = (workflow.errorReport ?: 'None')
-    email_fields['commandLine'] = workflow.commandLine
-    email_fields['projectDir'] = workflow.projectDir
-    email_fields['summary'] = summary
-    email_fields['summary']['Date Started'] = workflow.start
-    email_fields['summary']['Date Completed'] = workflow.complete
-    email_fields['summary']['Pipeline script file path'] = workflow.scriptFile
-    email_fields['summary']['Pipeline script hash ID'] = workflow.scriptId
-    if (workflow.repository) email_fields['summary']['Pipeline repository Git URL'] = workflow.repository
-    if (workflow.commitId) email_fields['summary']['Pipeline repository Git Commit'] = workflow.commitId
-    if (workflow.revision) email_fields['summary']['Pipeline Git branch/tag'] = workflow.revision
-    email_fields['summary']['Nextflow Version'] = workflow.nextflow.version
-    email_fields['summary']['Nextflow Build'] = workflow.nextflow.build
-    email_fields['summary']['Nextflow Compile Timestamp'] = workflow.nextflow.timestamp
-
-    // TODO nf-core: If not using MultiQC, strip out this code (including params.max_multiqc_email_size)
-    // On success try attach the multiqc report
-    def mqc_report = null
-    try {
-        if (workflow.success) {
-            mqc_report = ch_multiqc_report.getVal()
-            if (mqc_report.getClass() == ArrayList) {
-                log.warn "[lifebit-ai/traits] Found multiple reports from process 'multiqc', will use only one"
-                mqc_report = mqc_report[0]
-            }
-        }
-    } catch (all) {
-        log.warn "[lifebit-ai/traits] Could not attach MultiQC report to summary email"
-    }
-
-    // Check if we are only sending emails on failure
-    email_address = params.email
-    if (!params.email && params.email_on_fail && !workflow.success) {
-        email_address = params.email_on_fail
-    }
-
-    // Render the TXT template
-    def engine = new groovy.text.GStringTemplateEngine()
-    def tf = new File("$baseDir/assets/email_template.txt")
-    def txt_template = engine.createTemplate(tf).make(email_fields)
-    def email_txt = txt_template.toString()
-
-    // Render the HTML template
-    def hf = new File("$baseDir/assets/email_template.html")
-    def html_template = engine.createTemplate(hf).make(email_fields)
-    def email_html = html_template.toString()
-
-    // Render the sendmail template
-    def smail_fields = [ email: email_address, subject: subject, email_txt: email_txt, email_html: email_html, baseDir: "$baseDir", mqcFile: mqc_report, mqcMaxSize: params.max_multiqc_email_size.toBytes() ]
-    def sf = new File("$baseDir/assets/sendmail_template.txt")
-    def sendmail_template = engine.createTemplate(sf).make(smail_fields)
-    def sendmail_html = sendmail_template.toString()
-
-    // Send the HTML e-mail
-    if (email_address) {
-        try {
-            if (params.plaintext_email) { throw GroovyException('Send plaintext e-mail, not HTML') }
-            // Try to send HTML e-mail using sendmail
-            [ 'sendmail', '-t' ].execute() << sendmail_html
-            log.info "[lifebit-ai/traits] Sent summary e-mail to $email_address (sendmail)"
-        } catch (all) {
-            // Catch failures and try with plaintext
-            def mail_cmd = [ 'mail', '-s', subject, '--content-type=text/html', email_address ]
-            if ( mqc_report.size() <= params.max_multiqc_email_size.toBytes() ) {
-              mail_cmd += [ '-A', mqc_report ]
-            }
-            mail_cmd.execute() << email_html
-            log.info "[lifebit-ai/traits] Sent summary e-mail to $email_address (mail)"
-        }
-    }
-
-    // Write summary e-mail HTML to a file
-    def output_d = new File("${params.outdir}/pipeline_info/")
-    if (!output_d.exists()) {
-        output_d.mkdirs()
-    }
-    def output_hf = new File(output_d, "pipeline_report.html")
-    output_hf.withWriter { w -> w << email_html }
-    def output_tf = new File(output_d, "pipeline_report.txt")
-    output_tf.withWriter { w -> w << email_txt }
-
-    c_green = params.monochrome_logs ? '' : "\033[0;32m";
-    c_purple = params.monochrome_logs ? '' : "\033[0;35m";
-    c_red = params.monochrome_logs ? '' : "\033[0;31m";
-    c_reset = params.monochrome_logs ? '' : "\033[0m";
-
-    if (workflow.stats.ignoredCount > 0 && workflow.success) {
-        log.info "-${c_purple}Warning, pipeline completed, but with errored process(es) ${c_reset}-"
-        log.info "-${c_red}Number of ignored errored process(es) : ${workflow.stats.ignoredCount} ${c_reset}-"
-        log.info "-${c_green}Number of successfully ran process(es) : ${workflow.stats.succeedCount} ${c_reset}-"
-    }
-
-    if (workflow.success) {
-        log.info "-${c_purple}[lifebit-ai/traits]${c_green} Pipeline completed successfully${c_reset}-"
-    } else {
-        checkHostname()
-        log.info "-${c_purple}[lifebit-ai/traits]${c_red} Pipeline completed with errors${c_reset}-"
-    }
-
-}
 
 
 def nfcoreHeader() {
