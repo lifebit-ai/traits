@@ -42,7 +42,7 @@ rs7523549	1	869180	T	C	1.823	0.8756	0.4929	0.13	0	0.0137615
 - **--output_tag** : String with tag for files
 - **--external_gwas_cat_study_id** : String with ID from GWAS catalogue study to be used as input for genetic correlation
 - **--external_gwas_cat_study_size**  : Integer with size of study being used for genetic correlation
-- **--external_gwas_cat_ftp** : Path to ftp locations of harmonized GWAS catalogue studies. Defaults to "https://lifebit-featured-datasets.s3-eu-west-1.amazonaws.com/projects/gel/prs/ftp_locations_harmonized.csv"
-- **--hapmap3_snplist** : Path to snp list from hapmap3 to be used for analysis. Defaults to "https://lifebit-featured-datasets.s3-eu-west-1.amazonaws.com/projects/gel/gel-gwas/assets/w_hm3.snplist"
-- **--ld_scores_tar_bz2** : Path to precomputed LD scores from Defaults to the European 1000 Genomes cohort at "https://lifebit-featured-datasets.s3-eu-west-1.amazonaws.com/projects/gel/gel-gwas/assets/eur_w_ld_chr.tar.bz2"
+- **--external_gwas_cat_ftp** : Path to ftp locations of harmonized GWAS catalogue studies. Defaults to "https://lifebit-featured-datasets.s3-eu-west-1.amazonaws.com/pipelines/prs/ftp_locations_harmonized.csv"
+- **--hapmap3_snplist** : Path to snp list from hapmap3 to be used for analysis. Defaults to "https://lifebit-featured-datasets.s3-eu-west-1.amazonaws.com/pipelines/biobank-gwas/assets/w_hm3.snplist"
+- **--ld_scores_tar_bz2** : Path to precomputed LD scores from Defaults to the European 1000 Genomes cohort at "https://lifebit-featured-datasets.s3-eu-west-1.amazonaws.com/pipelines/biobank-gwas/assets/eur_w_ld_chr.tar.bz2"
 - **--outdir** : Path to output directory. Defaults to './results'
