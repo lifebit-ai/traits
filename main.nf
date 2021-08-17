@@ -85,6 +85,12 @@ ch_hapmap3_snplist =  params.hapmap3_snplist ? Channel.value(file(params.hapmap3
 ch_ld_scores_tar_bz2 =  params.ld_scores_tar_bz2 ? Channel.value(file(params.ld_scores_tar_bz2)) :  "null"
 ch_gwas_summary = params.external_gwas_statistics ? Channel.value(file(params.external_gwas_statistics)) : Channel.empty()
 
+if (params.post_analysis == 'genetic_correlation_h2'){
+  if (!params.external_gwas_statistics && !params.external_gwas_cat_study_id){
+    exit 1, "Second summary statistics file, or its study ID from GWAS Catalogue is required for estimating genetic correlation."
+  }
+}
+
 /*--------------------------------------------------
   LDSC - Genetic correlation and heritability
 ---------------------------------------------------*/
