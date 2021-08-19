@@ -91,6 +91,26 @@ if (params.post_analysis == 'genetic_correlation_h2'){
   }
 }
 
+// if (params.external_gwas_cat_study_id) {
+//   if (!params.external_gwas_cat_ftp || !params.external_gwas_cat_study_size) {
+//     exit 1, "Both file with GWAS catalogue FTP locations and study size have to be supplied if GWAS catalogue study ID is supplied. "
+//   }
+// }
+// if (params.external_gwas_cat_ftp) {
+//   if (!params.external_gwas_cat_study_id || !params.external_gwas_cat_study_size) {
+//     exit 1, "Both study ID and study size have to be supplied if file with GWAS catalogue FTP locations is supplied. "
+//   }
+// } 
+// if (params.external_gwas_cat_study_size) {
+//   if (!params.external_gwas_cat_study_id || !params.external_gwas_cat_ftp) {
+//     exit 1, "Both study ID and file with GWAS catalogue FTP locations if file with study size for a GWAS catalogue study is supplied. "
+//   }
+// } 
+
+
+
+
+
 /*--------------------------------------------------
   LDSC - Genetic correlation and heritability
 ---------------------------------------------------*/
