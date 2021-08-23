@@ -83,14 +83,16 @@ log.info "-\033[2m--------------------------------------------------\033[0m-"
   Channel preparation
 ---------------------------------------------------*/
 
+if (params.pop && params.ld_scores_tar_bz2){
+  exit 1, "Both LD scores and pre-computed 1000Genomes population-specific LD scores are provided. Please specify pre-computed population-specific 1000G or custom LD scores either via --pop or --ld_scores_tar_bz2"
+}
+
 ch_ldsc_input = params.input_gwas_statistics ? Channel.value(file(params.input_gwas_statistics)) : Channel.empty()
 ch_hapmap3_snplist =  params.hapmap3_snplist ? Channel.value(file(params.hapmap3_snplist)) :  "null"
 ch_ld_scores_tar_bz2 =  !params.ld_scores_tar_bz2 && params.pop ? Channel.value(file(params.pops[params.pop].ld_scores_tar_bz2)) :  Channel.value(file(params.ld_scores_tar_bz2))
 ch_gwas_summary = params.external_gwas_statistics ? Channel.value(file(params.external_gwas_statistics)) : Channel.empty()
 
-if (params.pop && params.ld_scores_tar_bz2){
-  exit 1, "Both LD scores and pre-computed 1000Genomes population-specific LD scores are provided. Please specify pre-computed population-specific 1000G or custom LD scores either via --pop or --ld_scores_tar_bz2"
-}
+
 
 if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_cat_study_id){
 
@@ -136,7 +138,6 @@ if (params.external_gwas_cat_study_size) {
 if (params.post_analysis == 'heritability' || params.post_analysis == 'genetic_correlation_h2'){
   process prepare_files_ldsc {
     tag "preparation_files"
-    label "R"
     publishDir "${params.outdir}/ldsc_inputs/", mode: 'copy'
 
     input:
@@ -155,7 +156,6 @@ if (params.post_analysis == 'heritability' || params.post_analysis == 'genetic_c
   }
   process munge_saige_output {
     tag "munge_saige_output"
-    label "ldsc"
     publishDir "${params.outdir}/ldsc_inputs/", mode: 'copy'
 
     input:
@@ -185,7 +185,6 @@ if (params.post_analysis == 'heritability'){
 
   process heritability {
     tag "heritability"
-    label "ldsc"
     publishDir "${params.outdir}/heritability/", mode: 'copy'
 
     input:
@@ -253,7 +252,6 @@ if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_sta
   //* Run genetic correlation
   process genetic_correlation_h2 {
     tag "genetic_correlation_h2"
-    label "ldsc"
     publishDir "${params.outdir}/genetic_correlation/", mode: 'copy'
 
     input:
@@ -286,7 +284,6 @@ if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_cat
 
   process download_gwas_catalogue {
     label "high_memory"
-    label "R"
     publishDir "${params.outdir}/GWAS_cat", mode: "copy"
     
     input:
@@ -303,7 +300,6 @@ if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_cat
 
   process transform_gwas_catalogue {
     label "high_memory"
-    label "R"
     publishDir "${params.outdir}/GWAS_cat", mode: "copy"
     
     input:
@@ -324,7 +320,6 @@ if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_cat
 
   process munge_gwas_cat_summary {
     tag "munge_gwas_summary"
-    label "ldsc"
     publishDir "${params.outdir}/ldsc_inputs/", mode: 'copy'
 
     input:
@@ -349,7 +344,6 @@ if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_cat
   //* Run genetic correlation
   process genetic_correlation_h2_gwas_cat {
     tag "genetic_correlation_h2"
-    label "ldsc"
     publishDir "${params.outdir}/genetic_correlation/", mode: 'copy'
 
     input:
