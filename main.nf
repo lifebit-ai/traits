@@ -280,6 +280,7 @@ if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_cat
 
   process download_gwas_catalogue {
     label "high_memory"
+    label "R"
     publishDir "${params.outdir}/GWAS_cat", mode: "copy"
     
     input:
