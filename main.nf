@@ -31,6 +31,8 @@ def helpMessage() {
     --external_gwas_cat_ftp             Path to csv containing ftp locations of gwas catalogue files
     --hapmap3_snplist                Path to SNP list from Hapmap needed for seleting SNPs considered for analysis
     --ld_scores_tar_bz2              Path to tar.bz2 files with precomputed LD scores
+    --pop                            Population (determines population-specific 1000Genomes LD scores used). Can be specified 
+                                     instead of --ld_scores_tar_bz2 parameter. Default = EUR. Current available input options: EUR (European), EAS (East Asian).
     --outdir                         Path to output directory
     --output_tag                     String containing output tag
     """.stripIndent()
@@ -63,13 +65,14 @@ summary['Script dir']                     = workflow.projectDir
 summary['User']                           = workflow.userName
 
 summary['post_analysis']                  = params.post_analysis
-summary['input_gwas_statistics']                     = params.input_gwas_statistics
-summary['external_gwas_statistics']                   = params.external_gwas_statistics
-summary['external_gwas_cat_study_id']              = params.external_gwas_cat_study_id
-summary['external_gwas_cat_study_size']            = params.external_gwas_cat_study_size
-summary['external_gwas_cat_ftp']             = params.external_gwas_cat_ftp
+summary['input_gwas_statistics']          = params.input_gwas_statistics
+summary['external_gwas_statistics']       = params.external_gwas_statistics
+summary['external_gwas_cat_study_id']     = params.external_gwas_cat_study_id
+summary['external_gwas_cat_study_size']   = params.external_gwas_cat_study_size
+summary['external_gwas_cat_ftp']          = params.external_gwas_cat_ftp
 summary['hapmap3_snplist']                = params.hapmap3_snplist
 summary['ld_scores_tar_bz2']              = params.ld_scores_tar_bz2
+summary['pop']                            = params.pop
 summary['output_tag']                     = params.output_tag
 summary['outdir']                         = params.outdir
 
@@ -82,9 +85,12 @@ log.info "-\033[2m--------------------------------------------------\033[0m-"
 
 ch_ldsc_input = params.input_gwas_statistics ? Channel.value(file(params.input_gwas_statistics)) : Channel.empty()
 ch_hapmap3_snplist =  params.hapmap3_snplist ? Channel.value(file(params.hapmap3_snplist)) :  "null"
-ch_ld_scores_tar_bz2 =  params.ld_scores_tar_bz2 ? Channel.value(file(params.ld_scores_tar_bz2)) :  "null"
+ch_ld_scores_tar_bz2 =  !params.ld_scores_tar_bz2 && params.pop ? Channel.value(file(params.pops[params.pop].ld_scores_tar_bz2)) :  Channel.value(file(params.ld_scores_tar_bz2))
 ch_gwas_summary = params.external_gwas_statistics ? Channel.value(file(params.external_gwas_statistics)) : Channel.empty()
 
+if (params.pop && params.ld_scores_tar_bz2){
+  exit 1, "Both LD scores and pre-computed 1000Genomes population-specific LD scores are provided. Please specify pre-computed population-specific 1000G or custom LD scores either via --pop or --ld_scores_tar_bz2"
+}
 
 if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_cat_study_id){
 
