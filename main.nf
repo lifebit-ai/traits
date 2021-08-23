@@ -85,6 +85,19 @@ ch_hapmap3_snplist =  params.hapmap3_snplist ? Channel.value(file(params.hapmap3
 ch_ld_scores_tar_bz2 =  params.ld_scores_tar_bz2 ? Channel.value(file(params.ld_scores_tar_bz2)) :  "null"
 ch_gwas_summary = params.external_gwas_statistics ? Channel.value(file(params.external_gwas_statistics)) : Channel.empty()
 
+
+if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_cat_study_id){
+
+  external_gwas_cat_ftp_ch = Channel.fromPath(params.external_gwas_cat_ftp, checkIfExists: true)
+    .ifEmpty { exit 1, "GWAS catalogue ftp locations not found: ${params.external_gwas_cat_ftp}" }
+    .splitCsv(header: true)
+    .map { row -> tuple(row.study_accession, row.ftp_link_harmonised_summary_stats) }
+    .filter{ it[0] == params.external_gwas_cat_study_id}
+    .ifEmpty { exit 1, "The GWAS study accession number you provided does not come as a harmonized dataset that can be used as a base cohort "}
+    .flatten()
+    .last()
+}
+
 if (params.post_analysis == 'genetic_correlation_h2'){
   if (!params.external_gwas_statistics && !params.external_gwas_cat_study_id){
     exit 1, "Second summary statistics file, or its study ID from GWAS Catalogue is required for estimating genetic correlation."
@@ -117,6 +130,7 @@ if (params.post_analysis == 'genetic_correlation_h2'){
 if (params.post_analysis == 'heritability' || params.post_analysis == 'genetic_correlation_h2'){
   process prepare_files_ldsc {
     tag "preparation_files"
+    label "R"
     publishDir "${params.outdir}/ldsc_inputs/", mode: 'copy'
 
     input:
@@ -135,6 +149,7 @@ if (params.post_analysis == 'heritability' || params.post_analysis == 'genetic_c
   }
   process munge_saige_output {
     tag "munge_saige_output"
+    label "ldsc"
     publishDir "${params.outdir}/ldsc_inputs/", mode: 'copy'
 
     input:
@@ -164,6 +179,7 @@ if (params.post_analysis == 'heritability'){
 
   process heritability {
     tag "heritability"
+    label "ldsc"
     publishDir "${params.outdir}/heritability/", mode: 'copy'
 
     input:
@@ -231,6 +247,7 @@ if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_sta
   //* Run genetic correlation
   process genetic_correlation_h2 {
     tag "genetic_correlation_h2"
+    label "ldsc"
     publishDir "${params.outdir}/genetic_correlation/", mode: 'copy'
 
     input:
@@ -261,15 +278,6 @@ if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_sta
 
 if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_cat_study_id){
 
-  external_gwas_cat_ftp_ch = Channel.fromPath(params.external_gwas_cat_ftp, checkIfExists: true)
-    .ifEmpty { exit 1, "GWAS catalogue ftp locations not found: ${params.external_gwas_cat_ftp}" }
-    .splitCsv(header: true)
-    .map { row -> tuple(row.study_accession, row.ftp_link_harmonised_summary_stats) }
-    .filter{ it[0] == params.external_gwas_cat_study_id}
-    .ifEmpty { exit 1, "The GWAS study accession number you provided does not come as a harmonized dataset that can be used as a base cohort "}
-    .flatten()
-    .last()
-
   process download_gwas_catalogue {
     label "high_memory"
     publishDir "${params.outdir}/GWAS_cat", mode: "copy"
@@ -288,6 +296,7 @@ if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_cat
 
   process transform_gwas_catalogue {
     label "high_memory"
+    label "R"
     publishDir "${params.outdir}/GWAS_cat", mode: "copy"
     
     input:
@@ -308,6 +317,7 @@ if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_cat
 
   process munge_gwas_cat_summary {
     tag "munge_gwas_summary"
+    label "ldsc"
     publishDir "${params.outdir}/ldsc_inputs/", mode: 'copy'
 
     input:
@@ -332,6 +342,7 @@ if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_cat
   //* Run genetic correlation
   process genetic_correlation_h2_gwas_cat {
     tag "genetic_correlation_h2"
+    label "ldsc"
     publishDir "${params.outdir}/genetic_correlation/", mode: 'copy'
 
     input:
