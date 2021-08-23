@@ -30,9 +30,11 @@ def helpMessage() {
     --external_gwas_cat_study_size            Integer describing size of GWAS study
     --external_gwas_cat_ftp             Path to csv containing ftp locations of gwas catalogue files
     --hapmap3_snplist                Path to SNP list from Hapmap needed for seleting SNPs considered for analysis
-    --ld_scores_tar_bz2              Path to tar.bz2 files with precomputed LD scores
+    --ld_scores_tar_bz2              Path to tar.bz2 files with precomputed LD scores. Alternatively, population can be specified via --pop parameter to use population-specific 1000Genomes LD scores. 
+                                     If both --ld_scores_tar_bz2 and --pop are specified, LD scores provided via --ld_scores_tar_bz2 will be used.
     --pop                            Population (determines population-specific 1000Genomes LD scores used). Can be specified 
                                      instead of --ld_scores_tar_bz2 parameter. Default = EUR. Current available input options: EUR (European), EAS (East Asian).
+                                     If both --ld_scores_tar_bz2 and --pop are specified, LD scores provided via --ld_scores_tar_bz2 will be used.
     --outdir                         Path to output directory
     --output_tag                     String containing output tag
     """.stripIndent()
@@ -84,7 +86,7 @@ log.info "-\033[2m--------------------------------------------------\033[0m-"
 ---------------------------------------------------*/
 
 if (params.pop && params.ld_scores_tar_bz2){
-  exit 1, "Both LD scores and pre-computed 1000Genomes population-specific LD scores are provided. Please specify pre-computed population-specific 1000G or custom LD scores either via --pop or --ld_scores_tar_bz2"
+  log.warn "Both LD scores and pre-computed 1000Genomes population-specific LD scores are provided. Custom LD scores are used."
 }
 
 ch_ldsc_input = params.input_gwas_statistics ? Channel.value(file(params.input_gwas_statistics)) : Channel.empty()
