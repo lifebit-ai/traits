@@ -1,0 +1,20 @@
+# You can use this file to create a conda environment for this pipeline:
+#   conda env create -f environment.yml
+name: traits
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - ldsc
+  - r-base
+  - r-irkernel
+  - r-devtools
+  - r-kableextra
+  - r-htmltools
+  - cairo
+  - fonts-anaconda=1
+  - r-data.table
+  - r-tidyverse
+  - r-optparse
+  - r-r.utils
