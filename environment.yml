@@ -24,5 +24,5 @@ dependencies:
   - fonts-anaconda=1
   - r-data.table
   - r-tidyverse
-  - conda-forge::r-optparse
-  - conda-forge::r-r.utils
+  - r-optparse
+  - r-r.utils
