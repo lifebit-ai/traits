@@ -14,7 +14,7 @@
 3. Download the pipeline and test it on a minimal dataset with a single command:
 
     ```bash
-    nextflow run main.nf -profile binary_h2
+    nextflow run main.nf --config conf/binary_h2.config
     ```
 
 4. Start running your own analysis!
