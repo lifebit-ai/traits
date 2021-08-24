@@ -17,7 +17,7 @@ jobs:
           sudo mv nextflow /usr/local/bin/
       - name: Binary trait and heritability
         run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile binary_h2
+          nextflow run ${GITHUB_WORKSPACE} --config conf/binary_h2.config
   binary_gwas_catalogue:
     runs-on: ubuntu-latest
     strategy:
@@ -32,7 +32,7 @@ jobs:
           sudo mv nextflow /usr/local/bin/
       - name: Binary trait and genetic correlation against GWAS cat summary stats
         run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile binary_gwas_catalogue
+          nextflow run ${GITHUB_WORKSPACE} --config conf/binary_gwas_catalogue_genetic_correlation_h2.config
   binary_genetic_correlation_h2:
     runs-on: ubuntu-latest
     strategy:
@@ -47,7 +47,7 @@ jobs:
           sudo mv nextflow /usr/local/bin/
       - name: Binary trait with genetic correlation against quantitative trait
         run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile binary_genetic_correlation_h2
+          nextflow run ${GITHUB_WORKSPACE} --config conf/binary_genetic_correlation_h2.config
   qt_h2:
     runs-on: ubuntu-latest
     strategy:
@@ -62,7 +62,7 @@ jobs:
           sudo mv nextflow /usr/local/bin/
       - name: Quantitative trait with H2
         run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile qt_h2
+          nextflow run ${GITHUB_WORKSPACE} --config conf/qt_h2.config
   qt_gwas_catalogue:
     runs-on: ubuntu-latest
     strategy:
@@ -77,7 +77,7 @@ jobs:
           sudo mv nextflow /usr/local/bin/
       - name: Test with quantitative trait and genetic correlation using GWAS catalogue summary stats
         run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile qt_gwas_catalogue
+          nextflow run ${GITHUB_WORKSPACE} --config conf/qt_gwas_catalogue.config
   qt_genetic_correlation_h2:
     runs-on: ubuntu-latest
     strategy:
@@ -92,4 +92,4 @@ jobs:
           sudo mv nextflow /usr/local/bin/
       - name: Test with quantitative trait and genetic correlation using qt trait
         run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile qt_genetic_correlation_h2
+          nextflow run ${GITHUB_WORKSPACE} --config conf/qt_genetic_correlation_h2.config

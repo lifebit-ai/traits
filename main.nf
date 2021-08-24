@@ -30,7 +30,11 @@ def helpMessage() {
     --external_gwas_cat_study_size            Integer describing size of GWAS study
     --external_gwas_cat_ftp             Path to csv containing ftp locations of gwas catalogue files
     --hapmap3_snplist                Path to SNP list from Hapmap needed for seleting SNPs considered for analysis
-    --ld_scores_tar_bz2              Path to tar.bz2 files with precomputed LD scores
+    --ld_scores_tar_bz2              Path to tar.bz2 files with precomputed LD scores. Alternatively, population can be specified via --pop parameter to use population-specific 1000Genomes LD scores. 
+                                     If both --ld_scores_tar_bz2 and --pop are specified, LD scores provided via --ld_scores_tar_bz2 will be used.
+    --pop                            Population (determines population-specific 1000Genomes LD scores used). Can be specified 
+                                     instead of --ld_scores_tar_bz2 parameter. Default = EUR. Current available input options: EUR (European), EAS (East Asian).
+                                     If both --ld_scores_tar_bz2 and --pop are specified, LD scores provided via --ld_scores_tar_bz2 will be used.
     --outdir                         Path to output directory
     --output_tag                     String containing output tag
     """.stripIndent()
@@ -63,13 +67,14 @@ summary['Script dir']                     = workflow.projectDir
 summary['User']                           = workflow.userName
 
 summary['post_analysis']                  = params.post_analysis
-summary['input_gwas_statistics']                     = params.input_gwas_statistics
-summary['external_gwas_statistics']                   = params.external_gwas_statistics
-summary['external_gwas_cat_study_id']              = params.external_gwas_cat_study_id
-summary['external_gwas_cat_study_size']            = params.external_gwas_cat_study_size
-summary['external_gwas_cat_ftp']             = params.external_gwas_cat_ftp
+summary['input_gwas_statistics']          = params.input_gwas_statistics
+summary['external_gwas_statistics']       = params.external_gwas_statistics
+summary['external_gwas_cat_study_id']     = params.external_gwas_cat_study_id
+summary['external_gwas_cat_study_size']   = params.external_gwas_cat_study_size
+summary['external_gwas_cat_ftp']          = params.external_gwas_cat_ftp
 summary['hapmap3_snplist']                = params.hapmap3_snplist
 summary['ld_scores_tar_bz2']              = params.ld_scores_tar_bz2
+summary['pop']                            = params.pop
 summary['output_tag']                     = params.output_tag
 summary['outdir']                         = params.outdir
 
@@ -80,10 +85,54 @@ log.info "-\033[2m--------------------------------------------------\033[0m-"
   Channel preparation
 ---------------------------------------------------*/
 
+if (params.pop && params.ld_scores_tar_bz2){
+  log.warn "Both LD scores and pre-computed 1000Genomes population-specific LD scores are provided. Custom LD scores are used."
+}
+
 ch_ldsc_input = params.input_gwas_statistics ? Channel.value(file(params.input_gwas_statistics)) : Channel.empty()
 ch_hapmap3_snplist =  params.hapmap3_snplist ? Channel.value(file(params.hapmap3_snplist)) :  "null"
-ch_ld_scores_tar_bz2 =  params.ld_scores_tar_bz2 ? Channel.value(file(params.ld_scores_tar_bz2)) :  "null"
+ch_ld_scores_tar_bz2 =  !params.ld_scores_tar_bz2 && params.pop ? Channel.value(file(params.pops[params.pop].ld_scores_tar_bz2)) :  Channel.value(file(params.ld_scores_tar_bz2))
 ch_gwas_summary = params.external_gwas_statistics ? Channel.value(file(params.external_gwas_statistics)) : Channel.empty()
+
+
+
+if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_cat_study_id){
+
+  external_gwas_cat_ftp_ch = Channel.fromPath(params.external_gwas_cat_ftp, checkIfExists: true)
+    .ifEmpty { exit 1, "GWAS catalogue ftp locations not found: ${params.external_gwas_cat_ftp}" }
+    .splitCsv(header: true)
+    .map { row -> tuple(row.study_accession, row.ftp_link_harmonised_summary_stats) }
+    .filter{ it[0] == params.external_gwas_cat_study_id}
+    .ifEmpty { exit 1, "The GWAS study accession number you provided does not come as a harmonized dataset that can be used as a base cohort "}
+    .flatten()
+    .last()
+}
+
+if (params.post_analysis == 'genetic_correlation_h2'){
+  if (!params.external_gwas_statistics && !params.external_gwas_cat_study_id){
+    exit 1, "Second summary statistics file, or its study ID from GWAS Catalogue is required for estimating genetic correlation."
+  }
+}
+
+if (params.external_gwas_cat_study_id) {
+  if (!params.external_gwas_cat_ftp || !params.external_gwas_cat_study_size) {
+    exit 1, "Both file with GWAS catalogue FTP locations and study size have to be supplied if GWAS catalogue study ID is supplied. "
+  }
+}
+if (params.external_gwas_cat_ftp) {
+  if (!params.external_gwas_cat_study_id || !params.external_gwas_cat_study_size) {
+    exit 1, "Both study ID and study size have to be supplied if file with GWAS catalogue FTP locations is supplied. "
+  }
+} 
+if (params.external_gwas_cat_study_size) {
+  if (!params.external_gwas_cat_study_id || !params.external_gwas_cat_ftp) {
+    exit 1, "Both study ID and file with GWAS catalogue FTP locations if study size for a GWAS catalogue study is supplied. "
+  }
+} 
+
+
+
+
 
 /*--------------------------------------------------
   LDSC - Genetic correlation and heritability
@@ -235,15 +284,6 @@ if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_sta
 
 if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_cat_study_id){
 
-  external_gwas_cat_ftp_ch = Channel.fromPath(params.external_gwas_cat_ftp, checkIfExists: true)
-    .ifEmpty { exit 1, "GWAS catalogue ftp locations not found: ${params.external_gwas_cat_ftp}" }
-    .splitCsv(header: true)
-    .map { row -> tuple(row.study_accession, row.ftp_link_harmonised_summary_stats) }
-    .filter{ it[0] == params.external_gwas_cat_study_id}
-    .ifEmpty { exit 1, "The GWAS study accession number you provided does not come as a harmonized dataset that can be used as a base cohort "}
-    .flatten()
-    .last()
-
   process download_gwas_catalogue {
     label "high_memory"
     publishDir "${params.outdir}/GWAS_cat", mode: "copy"
@@ -329,50 +369,4 @@ if (params.post_analysis == 'genetic_correlation_h2' && params.external_gwas_cat
     """
   }
 
-}
-
-
-
-def nfcoreHeader() {
-    // Log colors ANSI codes
-    c_black = params.monochrome_logs ? '' : "\033[0;30m";
-    c_blue = params.monochrome_logs ? '' : "\033[0;34m";
-    c_cyan = params.monochrome_logs ? '' : "\033[0;36m";
-    c_dim = params.monochrome_logs ? '' : "\033[2m";
-    c_green = params.monochrome_logs ? '' : "\033[0;32m";
-    c_purple = params.monochrome_logs ? '' : "\033[0;35m";
-    c_reset = params.monochrome_logs ? '' : "\033[0m";
-    c_white = params.monochrome_logs ? '' : "\033[0;37m";
-    c_yellow = params.monochrome_logs ? '' : "\033[0;33m";
-
-    return """    -${c_dim}--------------------------------------------------${c_reset}-
-                                            ${c_green},--.${c_black}/${c_green},-.${c_reset}
-    ${c_blue}        ___     __   __   __   ___     ${c_green}/,-._.--~\'${c_reset}
-    ${c_blue}  |\\ | |__  __ /  ` /  \\ |__) |__         ${c_yellow}}  {${c_reset}
-    ${c_blue}  | \\| |       \\__, \\__/ |  \\ |___     ${c_green}\\`-._,-`-,${c_reset}
-                                            ${c_green}`._,._,\'${c_reset}
-    ${c_purple}  lifebit-ai/traits v${workflow.manifest.version}${c_reset}
-    -${c_dim}--------------------------------------------------${c_reset}-
-    """.stripIndent()
-}
-
-def checkHostname() {
-    def c_reset = params.monochrome_logs ? '' : "\033[0m"
-    def c_white = params.monochrome_logs ? '' : "\033[0;37m"
-    def c_red = params.monochrome_logs ? '' : "\033[1;91m"
-    def c_yellow_bold = params.monochrome_logs ? '' : "\033[1;93m"
-    if (params.hostnames) {
-        def hostname = "hostname".execute().text.trim()
-        params.hostnames.each { prof, hnames ->
-            hnames.each { hname ->
-                if (hostname.contains(hname) && !workflow.profile.contains(prof)) {
-                    log.error "====================================================\n" +
-                            "  ${c_red}WARNING!${c_reset} You are running with `-profile $workflow.profile`\n" +
-                            "  but your machine hostname is ${c_white}'$hostname'${c_reset}\n" +
-                            "  ${c_yellow_bold}It's highly recommended that you use `-profile $prof${c_reset}`\n" +
-                            "============================================================"
-                }
-            }
-        }
-    }
 }
